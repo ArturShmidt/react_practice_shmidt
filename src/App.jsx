@@ -1,5 +1,5 @@
 /* eslint-disable jsx-a11y/accessible-emoji */
-import React from 'react';
+import React, { useState } from 'react';
 import './App.scss';
 
 import usersFromServer from './api/users';
@@ -8,9 +8,9 @@ import productsFromServer from './api/products';
 
 const products = productsFromServer.map(product => {
   const category =
-    categoriesFromServer.find(c => c.id === product.categoryId) || null;
+    categoriesFromServer.find(categ => categ.id === product.categoryId) || null;
   const user = category
-    ? usersFromServer.find(u => u.id === category.ownerId) || null
+    ? usersFromServer.find(usr => usr.id === category.ownerId) || null
     : null;
 
   return {
@@ -20,9 +20,21 @@ const products = productsFromServer.map(product => {
   };
 });
 
-const hasProducts = products.length > 0;
+const visibleByUsers = (prod, userName) => {
+  const preparedProducts = [...prod];
+
+  if (userName) {
+    return preparedProducts.filter(product => product.user.name === userName);
+  }
+
+  return preparedProducts;
+};
 
 export const App = () => {
+  const [userName] = useState('All');
+  const visibleProducts = visibleByUsers(products, userName);
+  const hasProducts = visibleProducts.length > 0;
+
   return (
     <div className="section">
       <div className="container">
@@ -37,17 +49,11 @@ export const App = () => {
                 All
               </a>
 
-              <a data-cy="FilterUser" href="#/">
-                User 1
-              </a>
-
-              <a data-cy="FilterUser" href="#/" className="is-active">
-                User 2
-              </a>
-
-              <a data-cy="FilterUser" href="#/">
-                User 3
-              </a>
+              {usersFromServer.map(user => (
+                <a data-cy="FilterUser" href="#/" key={user.id}>
+                  {user.name}
+                </a>
+              ))}
             </p>
 
             <div className="panel-block">
@@ -180,18 +186,37 @@ export const App = () => {
             </thead>
 
             <tbody>
-              <tr data-cy="Product">
-                <td className="has-text-weight-bold" data-cy="ProductId">
-                  1
-                </td>
+              {visibleProducts.map(product => {
+                let userClassName = '';
+                if (product.user) {
+                  userClassName =
+                    product.user.sex === 'm'
+                      ? 'has-text-link'
+                      : 'has-text-danger';
+                }
 
-                <td data-cy="ProductName">Milk</td>
-                <td data-cy="ProductCategory">🍺 - Drinks</td>
+                return (
+                  <tr key={product.id} data-cy="Product">
+                    <td className="has-text-weight-bold" data-cy="ProductId">
+                      {product.id}
+                    </td>
 
-                <td data-cy="ProductUser" className="has-text-link">
-                  Max
-                </td>
-              </tr>
+                    <td data-cy="ProductName">{product.name}</td>
+                    <td data-cy="ProductCategory">
+                      {product.category
+                        ? `${product.category.icon} - ${product.category.title}`
+                        : ''}
+                      s
+                    </td>
+
+                    <td data-cy="ProductUser" className={userClassName}>
+                      {product.category && product.user
+                        ? product.user.name
+                        : ''}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
