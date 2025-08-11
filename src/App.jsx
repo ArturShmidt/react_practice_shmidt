@@ -21,31 +21,47 @@ const products = productsFromServer.map(product => {
 });
 
 const visibleByUsers = (prod, userName) => {
-  const preparedProducts = [...prod];
-
   if (userName && userName !== 'All') {
-    return preparedProducts.filter(product => product.user.name === userName);
+    return prod.filter(product => product.user.name === userName);
   }
 
-  return preparedProducts;
+  return prod;
 };
 
-const visibleByCat = (prod, catName) => {
-  const preparedProducts = [...prod];
-
-  if (catName && catName !== 'All') {
-    return preparedProducts.filter(product => product.category.title === catName);
+const visibleByCat = (prod, catNames) => {
+  if (!catNames || catNames.length === 0) {
+    return prod;
   }
 
-  return preparedProducts;
-}
+  return prod.filter(product => catNames.includes(product.category.title));
+};
 
 export const App = () => {
   const [userName, setUserName] = useState('All');
+  const [catNames, setCatNames] = useState([]);
+  const [search, setSearch] = useState('');
+
   let visibleProducts = visibleByUsers(products, userName);
-  const [catName, setCatName] = useState('All');
-  visibleProducts = visibleByCat(visibleProducts, catName);
+
+  visibleProducts = visibleByCat(visibleProducts, catNames);
+
+  if (search.trim() !== '') {
+    visibleProducts = visibleProducts.filter(function (product) {
+      return (product.name.toLowerCase().includes(search.toLowerCase()));
+    });
+  }
+
   const hasProducts = visibleProducts.length > 0;
+
+  const toggleCategory = catTitle => {
+    setCatNames(prev => {
+      if (prev.includes(catTitle)) {
+        return prev.filter(title => title !== catTitle);
+      }
+
+      return [...prev, catTitle];
+    });
+  };
 
   return (
     <div className="section">
@@ -92,7 +108,8 @@ export const App = () => {
                   type="text"
                   className="input"
                   placeholder="Search"
-                  value="qwe"
+                  value={search}
+                  onChange={event => setSearch(event.target.value)}
                 />
 
                 <span className="icon is-left">
@@ -100,7 +117,6 @@ export const App = () => {
                 </span>
 
                 <span className="icon is-right">
-                  {/* eslint-disable-next-line jsx-a11y/control-has-associated-label */}
                   <button
                     data-cy="ClearButton"
                     type="button"
@@ -114,27 +130,29 @@ export const App = () => {
               <a
                 href="#/"
                 data-cy="AllCategories"
-                className={catName === 'All' ? 'is-info' : ''}
+                className={catNames.length === 0 ? 'is-info' : ''}
                 onClick={e => {
                   e.preventDefault();
-                  setCatName('All');
+                  setCatNames([]);
                 }}
               >
                 All
               </a>
 
-              {categoriesFromServer.map((cat) => (<a
-                data-cy="Category"
-                href="#/"
-                key={cat.id}
-                className={`button ${catName === cat.title ? 'is-info' : ''}`}
+              {categoriesFromServer.map(cat => (
+                <a
+                  data-cy="Category"
+                  href="#/"
+                  key={cat.id}
+                  className={`button ${catNames.includes(cat.title) ? 'is-info' : ''}`}
                   onClick={e => {
                     e.preventDefault();
-                    setCatName(cat.title);
+                    toggleCategory(cat.title);
                   }}
-              >
-                {cat.title}
-              </a>))}
+                >
+                  {cat.title}
+                </a>
+              ))}
             </div>
 
             <div className="panel-block">
@@ -142,6 +160,12 @@ export const App = () => {
                 data-cy="ResetAllButton"
                 href="#/"
                 className="button is-link is-outlined is-fullwidth"
+                onClick={e => {
+                  e.preventDefault();
+                  setUserName('All');
+                  setCatNames([]);
+                  setSearch('');
+                }}
               >
                 Reset all filters
               </a>
