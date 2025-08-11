@@ -121,9 +121,11 @@ export const App = () => {
         </div>
 
         <div className="box table-container">
-          {!hasProducts && (<p data-cy="NoMatchingMessage">
-            No products matching selected criteria
-          </p>)}
+          {!hasProducts && (
+            <p data-cy="NoMatchingMessage">
+              No products matching selected criteria
+            </p>
+          )}
 
           <table
             data-cy="ProductTable"
