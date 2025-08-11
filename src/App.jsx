@@ -23,16 +23,28 @@ const products = productsFromServer.map(product => {
 const visibleByUsers = (prod, userName) => {
   const preparedProducts = [...prod];
 
-  if (userName) {
+  if (userName && userName !== 'All') {
     return preparedProducts.filter(product => product.user.name === userName);
   }
 
   return preparedProducts;
 };
 
+const visibleByCat = (prod, catName) => {
+  const preparedProducts = [...prod];
+
+  if (catName && catName !== 'All') {
+    return preparedProducts.filter(product => product.category.title === catName);
+  }
+
+  return preparedProducts;
+}
+
 export const App = () => {
-  const [userName] = useState('All');
-  const visibleProducts = visibleByUsers(products, userName);
+  const [userName, setUserName] = useState('All');
+  let visibleProducts = visibleByUsers(products, userName);
+  const [catName, setCatName] = useState('All');
+  visibleProducts = visibleByCat(visibleProducts, catName);
   const hasProducts = visibleProducts.length > 0;
 
   return (
@@ -45,12 +57,29 @@ export const App = () => {
             <p className="panel-heading">Filters</p>
 
             <p className="panel-tabs has-text-weight-bold">
-              <a data-cy="FilterAllUsers" href="#/">
+              <a
+                data-cy="FilterAllUsers"
+                href="#/"
+                className={userName === 'All' ? 'is-active' : ''}
+                onClick={e => {
+                  e.preventDefault();
+                  setUserName('All');
+                }}
+              >
                 All
               </a>
 
               {usersFromServer.map(user => (
-                <a data-cy="FilterUser" href="#/" key={user.id}>
+                <a
+                  data-cy="FilterUser"
+                  href="#/"
+                  key={user.id}
+                  className={userName === user.name ? 'is-active' : ''}
+                  onClick={e => {
+                    e.preventDefault();
+                    setUserName(user.name);
+                  }}
+                >
                   {user.name}
                 </a>
               ))}
@@ -85,33 +114,27 @@ export const App = () => {
               <a
                 href="#/"
                 data-cy="AllCategories"
-                className="button is-success mr-6 is-outlined"
+                className={catName === 'All' ? 'is-info' : ''}
+                onClick={e => {
+                  e.preventDefault();
+                  setCatName('All');
+                }}
               >
                 All
               </a>
 
-              <a
+              {categoriesFromServer.map((cat) => (<a
                 data-cy="Category"
-                className="button mr-2 my-1 is-info"
                 href="#/"
+                key={cat.id}
+                className={`button ${catName === cat.title ? 'is-info' : ''}`}
+                  onClick={e => {
+                    e.preventDefault();
+                    setCatName(cat.title);
+                  }}
               >
-                Category 1
-              </a>
-
-              <a data-cy="Category" className="button mr-2 my-1" href="#/">
-                Category 2
-              </a>
-
-              <a
-                data-cy="Category"
-                className="button mr-2 my-1 is-info"
-                href="#/"
-              >
-                Category 3
-              </a>
-              <a data-cy="Category" className="button mr-2 my-1" href="#/">
-                Category 4
-              </a>
+                {cat.title}
+              </a>))}
             </div>
 
             <div className="panel-block">
@@ -188,6 +211,7 @@ export const App = () => {
             <tbody>
               {visibleProducts.map(product => {
                 let userClassName = '';
+
                 if (product.user) {
                   userClassName =
                     product.user.sex === 'm'
