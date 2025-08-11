@@ -47,7 +47,7 @@ export const App = () => {
 
   if (search.trim() !== '') {
     visibleProducts = visibleProducts.filter(function (product) {
-      return (product.name.toLowerCase().includes(search.toLowerCase()));
+      return product.name.toLowerCase().includes(search.toLowerCase());
     });
   }
 
